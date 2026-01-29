@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mindx-api
+  namespace: dev
+  labels:
+    app: mindx-api
+spec:
+  type: ClusterIP
+  selector:
+    app: mindx-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+

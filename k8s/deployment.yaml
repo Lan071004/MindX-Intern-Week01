@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mindx-api
+  namespace: dev
+  labels:
+    app: mindx-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mindx-api
+  template:
+    metadata:
+      labels:
+        app: mindx-api
+    spec:
+      imagePullSecrets:
+        - name: acr-pull
+      containers:
+        - name: mindx-api
+          image: mindxintern04acr.azurecr.io/myapi:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+
