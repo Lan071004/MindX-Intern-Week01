@@ -19,7 +19,7 @@ spec:
         - name: acr-pull
       containers:
         - name: mindx-api
-          image: mindxintern04acr.azurecr.io/myapi:1.0.0
+          image: mindxintern04acr.azurecr.io/mindx-api:v1.1.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
