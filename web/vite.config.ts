@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://bytes-amber-preference-since.trycloudflare.com',
+        target: 'https://doom-elvis-carries-terrorist.trycloudflare.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
         secure: false,

@@ -16,6 +16,7 @@ const app = express();
 // CORS Configuration
 const corsOptions = {
   origin: function (origin: string | undefined, callback: Function) {
+    // Cho phép requests không có origin (như Postman, curl)
     if (!origin) return callback(null, true);
 
     const allowedOrigins = [
@@ -23,10 +24,13 @@ const corsOptions = {
       'http://localhost:3000',
       'http://localhost:8080',
       'http://localhost',
-      'http://52.253.121.200'
+      'http://52.253.121.200',
+      'https://exec-subject-wesley-make.trycloudflare.com',
+      'https://doom-elvis-carries-terrorist.trycloudflare.com',
     ];
 
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Cho phép tất cả Cloudflare Tunnel domains
+    if (origin.includes('.trycloudflare.com') || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -34,6 +38,9 @@ const corsOptions = {
   },
   credentials: true,
   optionsSuccessStatus: 200,
+  // THÊM headers và methods
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 // Apply middlewares
@@ -44,7 +51,7 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 const PORT = process.env.PORT || 3000;
 
-// ─── Public Routes ───────────────────────────────────────────────
+// ─── Public Routes ─────────────────────────────────────────────────────────────
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
@@ -68,13 +75,13 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-// ─── Auth Routes ─────────────────────────────────────────────────
+// ─── Auth Routes ───────────────────────────────────────────────────────────────
 app.use('/auth', authRoutes);
 
-// ─── Protected Routes ────────────────────────────────────────────
+// ─── Protected Routes ──────────────────────────────────────────────────────────
 app.use('/protected', protectedRoutes);
 
-// ─── Error Handler ───────────────────────────────────────────────
+// ─── Error Handler ─────────────────────────────────────────────────────────────
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
   res.status(500).json({ error: 'Internal Server Error' });

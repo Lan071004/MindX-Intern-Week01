@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-tunnel
+  namespace: dev
+  labels:
+    app: api-tunnel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-tunnel
+  template:
+    metadata:
+      labels:
+        app: api-tunnel
+    spec:
+      containers:
+      - name: cloudflared
+        image: cloudflare/cloudflared:latest
+        args:
+        - tunnel
+        - --no-autoupdate
+        - --url
+        - http://mindx-api:80
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fe-tunnel
+  namespace: dev
+  labels:
+    app: fe-tunnel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fe-tunnel
+  template:
+    metadata:
+      labels:
+        app: fe-tunnel
+    spec:
+      containers:
+      - name: cloudflared
+        image: cloudflare/cloudflared:latest
+        args:
+        - tunnel
+        - --no-autoupdate
+        - --url
+        - http://frontend-service:80
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
