@@ -1,29 +1,31 @@
-# ---- Build stage ----
-FROM node:20-alpine AS build
+# ===== Build stage =====
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Install build dependencies
-RUN apk add --no-cache python3 make g++
+COPY package*.json ./
+RUN npm ci
 
-COPY package.json tsconfig.json .eslintrc.cjs ./
-COPY src ./src
-
-RUN npm install --production=false
+COPY . .
 RUN npm run build
 
-# ---- Runtime stage ----
-FROM node:20-alpine AS runtime
+# ===== Production stage =====
+FROM node:18-alpine
 
 WORKDIR /app
 
-ENV NODE_ENV=production
+# Chỉ install production deps
+COPY package*.json ./
+RUN npm ci --only=production
 
-COPY --from=build /app/package.json ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
+# Copy compiled output từ build stage
+COPY --from=builder /app/dist ./dist
+
+ENV NODE_ENV=production
+ENV PORT=3000
+# Trỏ đến path mà K8s secret sẽ mount vào
+ENV FIREBASE_SERVICE_ACCOUNT_PATH=/app/secrets/firebase-service-account.json
 
 EXPOSE 3000
 
 CMD ["node", "dist/index.js"]
-

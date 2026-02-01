@@ -19,13 +19,21 @@ spec:
         - name: acr-pull
       containers:
         - name: mindx-api
-          image: mindxintern04acr.azurecr.io/mindx-api:v1.1.0
-          imagePullPolicy: IfNotPresent
+          image: mindxintern04acr.azurecr.io/mindx-api:v1.2.0
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:
             - name: PORT
               value: "3000"
+            - name: NODE_ENV
+              value: "production"
+            - name: FIREBASE_SERVICE_ACCOUNT_PATH
+              value: "/app/secrets/firebase-service-account.json"
+          volumeMounts:
+            - name: firebase-secret
+              mountPath: /app/secrets
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /health
@@ -47,4 +55,7 @@ spec:
             limits:
               cpu: "250m"
               memory: "256Mi"
-
+      volumes:
+        - name: firebase-secret
+          secret:
+            secretName: firebase-secret

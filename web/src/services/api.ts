@@ -1,37 +1,58 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { auth } from '../firebase';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
-// Tạo axios instance với config mặc định
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds timeout
+  timeout: 10000,
 });
 
-// Response interceptor để xử lý lỗi thống nhất
+// ─── Request Interceptor: Tự đính kèm Firebase token ─────────────
+apiClient.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        const token = await user.getIdToken(true);
+        config.headers.Authorization = `Bearer ${token}`;
+      } catch (error) {
+        console.error('Failed to get token for request:', error);
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// ─── Response Interceptor: Handle errors ─────────────────────────
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
   (error: AxiosError) => {
     if (error.response) {
-      // Server trả về response với status code lỗi
       console.error('API Error Response:', error.response.status, error.response.data);
+
+      // Nếu 401 → token expired hoặc invalid → có thể force logout
+      if (error.response.status === 401) {
+        console.warn('Unauthorized - token may have expired');
+      }
     } else if (error.request) {
-      // Request được gửi nhưng không nhận được response
       console.error('API Error: No response received', error.request);
     } else {
-      // Lỗi xảy ra khi setup request
       console.error('API Error:', error.message);
     }
     return Promise.reject(error);
   }
 );
 
-// Interface cho API responses
+// ─── Interfaces ───────────────────────────────────────────────────
 export interface HealthCheckResponse {
   status: string;
   timestamp: string;
@@ -43,24 +64,45 @@ export interface ApiResponse {
   data?: any;
 }
 
-// API Methods
+export interface UserVerifyResponse {
+  message: string;
+  user: {
+    uid: string;
+    email: string;
+  };
+}
+
+export interface ProtectedProfileResponse {
+  message: string;
+  user: {
+    uid: string;
+    email: string;
+  };
+  timestamp: string;
+}
+
+// ─── API Methods ──────────────────────────────────────────────────
+// Public endpoints (không cần auth)
 export const healthCheck = async (): Promise<HealthCheckResponse> => {
-  try {
-    const response = await apiClient.get<HealthCheckResponse>('/health');
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.get<HealthCheckResponse>('/health');
+  return response.data;
 };
 
 export const getRootMessage = async (): Promise<ApiResponse> => {
-  try {
-    const response = await apiClient.get<ApiResponse>('/');
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const response = await apiClient.get<ApiResponse>('/');
+  return response.data;
 };
 
-// Export default client để sử dụng cho các custom requests
+// Auth endpoint
+export const verifyToken = async (): Promise<UserVerifyResponse> => {
+  const response = await apiClient.post<UserVerifyResponse>('/auth/verify');
+  return response.data;
+};
+
+// Protected endpoint
+export const getProtectedProfile = async (): Promise<ProtectedProfileResponse> => {
+  const response = await apiClient.get<ProtectedProfileResponse>('/protected/profile');
+  return response.data;
+};
+
 export default apiClient;
