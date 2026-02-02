@@ -30,7 +30,181 @@ This step establishes HTTPS access to your full-stack application using Cloudfla
 
 ---
 
-## 6.1 Deploy Cloudflare Tunnels for Frontend and Backend
+## Initial Approach: Traditional Ingress + Cert-Manager (Optional)
+
+Before using Cloudflare Tunnel, you may attempt the traditional approach with custom domain and Let's Encrypt SSL certificates.
+
+### 6.1 Domain Configuration
+
+Configure DNS records to point your custom domain to the ingress controller's external IP address.
+
+#### Setup FreeDNS Subdomain
+
+1. Go to https://freedns.afraid.org/
+2. Create a free account
+3. Navigate to "Subdomains" → "Add"
+4. Choose a subdomain (e.g., `lanmindx.chickenkiller.com`)
+5. Type: `A` record
+6. Destination: Your ingress LoadBalancer external IP (from `kubectl get svc -n ingress-nginx`)
+7. Click "Save"
+
+Wait 5-15 minutes for DNS propagation, then verify:
+
+```bash
+# Check DNS resolution
+nslookup lanmindx.chickenkiller.com
+
+# Should return your LoadBalancer IP
+```
+
+### 6.2 Install Cert-Manager
+
+Install cert-manager in the AKS cluster for automatic SSL certificate management with Let's Encrypt.
+
+```bash
+# Add Jetstack Helm repository
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+
+# Install cert-manager
+kubectl create namespace cert-manager
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --version v1.13.0 \
+  --set installCRDs=true
+
+# Verify installation
+kubectl get pods -n cert-manager
+```
+
+### 6.3 Create ClusterIssuer for Let's Encrypt
+
+Create `letsencrypt-prod.yaml`:
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: your-email@example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod-key
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+```
+
+Apply the ClusterIssuer:
+
+```bash
+kubectl apply -f letsencrypt-prod.yaml
+```
+
+### 6.4 Update Ingress for HTTPS
+
+Update your `ingress.yaml` to include TLS configuration:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mindx-ingress
+  namespace: dev
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - lanmindx.chickenkiller.com
+    secretName: mindx-tls-cert
+  rules:
+  - host: lanmindx.chickenkiller.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: mindx-api
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+```
+
+Apply the ingress:
+
+```bash
+kubectl apply -f ingress.yaml
+```
+
+### 6.5 Troubleshooting: NSG Blocking Port 80
+
+**Issue Encountered:**
+
+After completing steps 6.1-6.4, Let's Encrypt certificate provisioning fails with the following error:
+
+```bash
+kubectl describe certificate mindx-tls-cert -n dev
+```
+
+Output shows:
+```
+Error: Failed to perform HTTP-01 challenge validation
+Reason: Connection refused or timeout when accessing http://lanmindx.chickenkiller.com/.well-known/acme-challenge/...
+```
+
+**Root Cause:**
+
+Azure Network Security Group (NSG) blocks inbound traffic on port 80, preventing Let's Encrypt from completing the HTTP-01 challenge required for SSL certificate validation.
+
+**Why This Happens:**
+
+- Let's Encrypt needs to access `http://your-domain/.well-known/acme-challenge/TOKEN` to verify domain ownership
+- NSG rules block external HTTP traffic (port 80) to the AKS LoadBalancer
+- Without port 80 access, certificate provisioning fails
+
+**Verification:**
+
+```bash
+# Test external access to port 80
+curl http://lanmindx.chickenkiller.com/.well-known/acme-challenge/test
+
+# If NSG blocks traffic, this will timeout or return connection refused
+```
+
+**Potential Solutions:**
+
+1. **Contact System Administrator** to open NSG port 80 (requires Owner/Network Contributor role)
+2. **Use DNS-01 challenge** instead of HTTP-01 (requires Cloudflare API token)
+3. **Switch to Cloudflare Tunnel** (bypasses NSG entirely) ← **Chosen Solution**
+
+---
+
+## Alternative Approach: Cloudflare Tunnel (Implemented)
+
+Due to NSG restrictions blocking port 80, the traditional cert-manager approach cannot complete Let's Encrypt validation. Cloudflare Tunnel provides an alternative solution that:
+
+- Creates outbound connections from AKS (not blocked by NSG)
+- Provides automatic HTTPS without cert-manager
+- Works without requiring NSG configuration changes
+
+This is the approach implemented for this project.
+
+---
+
+## 6.6 Deploy Cloudflare Tunnels for Frontend and Backend
 
 Instead of using traditional ingress with LoadBalancer and SSL certificates, we'll create separate Cloudflare Tunnels for both frontend and backend services.
 
@@ -103,7 +277,7 @@ curl https://<YOUR-FRONTEND-TUNNEL-URL>/
 
 ---
 
-## 6.2 Configure CORS for Cloudflare Tunnel URLs
+## 6.7 Configure CORS for Cloudflare Tunnel URLs
 
 Since frontend and backend are on different domains, you must configure CORS in the backend API.
 
@@ -161,7 +335,7 @@ kubectl -n dev rollout status deployment/api-deployment
 
 ---
 
-## 6.3 Update Frontend with Backend Tunnel URL
+## 6.8 Update Frontend with Backend Tunnel URL
 
 The frontend needs to know the backend API's Cloudflare Tunnel URL.
 
@@ -217,7 +391,7 @@ kubectl -n dev rollout status deployment/frontend-deployment
 
 ---
 
-## 6.4 Verify HTTPS Access and Authentication Flow
+## 6.9 Verify HTTPS Access and Authentication Flow
 
 ### Test HTTPS Endpoints
 
@@ -263,32 +437,34 @@ Access-Control-Allow-Methods: GET,POST,PUT,DELETE,PATCH,OPTIONS
 
 ---
 
-## 6.5 (Optional) Configure Custom Domain with FreeDNS
+## 6.10 (Alternative) Use FreeDNS Custom Domain with Cloudflare Tunnel
 
-While Cloudflare Tunnel provides HTTPS automatically, the tunnel URLs are temporary and change when pods restart. For a more permanent solution, you can use a free DNS service.
+While Cloudflare Tunnel provides HTTPS automatically, the tunnel URLs are temporary and change when pods restart. You can use the FreeDNS subdomain created earlier (`lanmindx.chickenkiller.com`) with Cloudflare Tunnel for a more permanent solution.
 
-### Sign Up for FreeDNS
+### Update DNS Record to CNAME
 
-1. Go to https://freedns.afraid.org/
-2. Create a free account
-3. Navigate to "Subdomains" → "Add"
+1. Go to FreeDNS dashboard
+2. Edit your existing subdomain (`lanmindx.chickenkiller.com`)
+3. Change record type from `A` to `CNAME`
+4. Destination: Your Cloudflare Tunnel URL (e.g., `exec-subject-wesley-make.trycloudflare.com` - without https://)
+5. Click "Save"
 
-### Create CNAME Record
+**Note:** Some free DNS providers may not support CNAME for root subdomains. In this case, keep using the temporary tunnel URLs.
 
-1. Choose a subdomain (e.g., `myapp.mooo.com`)
-2. Type: `CNAME`
-3. Destination: Your Cloudflare Tunnel URL (without https://)
-4. Click "Save"
-
-### Update Application URLs
+### Update Application Configuration
 
 After DNS propagates (5-15 minutes), you can access your application via the custom domain:
 
 ```
-https://myapp.mooo.com/
+https://lanmindx.chickenkiller.com/
 ```
 
-**Note:** You'll need to update CORS configuration and rebuild frontend with the new domain if you use this approach.
+**Important:** You'll need to:
+1. Update CORS configuration in backend to include the new domain
+2. Rebuild frontend with `VITE_API_URL=https://lanmindx.chickenkiller.com`
+3. Redeploy both frontend and backend
+
+**Limitation:** This approach still depends on Cloudflare Tunnel's temporary URLs. If the tunnel restarts and gets a new URL, you'll need to update the CNAME record again.
 
 ---
 
@@ -429,3 +605,16 @@ kubectl -n dev delete deployment fe-tunnel
 - Protected routes are properly secured
 - Application remains functional across page refreshes
 
+---
+
+## Comparison: Cloudflare Tunnel vs Traditional Ingress
+
+| Feature | Cloudflare Tunnel | Traditional Ingress + Cert-Manager |
+|---------|-------------------|-----------------------------------|
+| **Setup Complexity** | Low (single command) | High (NSG, LoadBalancer, cert-manager) |
+| **HTTPS/SSL** | Automatic | Manual cert-manager configuration |
+| **URL Stability** | Temporary (changes on restart) | Permanent (custom domain) |
+| **NSG Requirements** | None | Requires NSG configuration |
+| **Production Ready** | No | Yes |
+| **Cost** | Free | LoadBalancer costs apply |
+| **Best For** | Development, Testing, Demos | Production deployments |
