@@ -86,38 +86,49 @@ Azure Kubernetes Service (AKS)
 
 ```
 mindx-intern04-week01/
-├── k8s/                          # Root Kubernetes manifests
-│   ├── deployment.yaml           # Backend API deployment
-│   ├── service.yaml              # Backend API service
-│   └── ingress.yaml              # Ingress configuration (optional)
+├── api/                          # Backend API application
+│   ├── src/                      # Backend source code
+│   ├── k8s/                      # Backend Kubernetes manifests
+│       ├── deployment.yaml       # Backend deployment manifest
+│       ├── service.yaml          # Backend service manifest
+│   ├── node_modules/             # Backend dependencies
+│   ├── Dockerfile                # Backend container config
+│   ├── .dockerignore             # Docker ignore rules for backend
+│   ├── package.json              # Backend dependencies
+│   ├── tsconfig.json             # TypeScript configuration
+│   ├── firebase-service-account.json # Firebase admin credentials (not in git)
+│   └── .env                      # Backend environment variables (not in git)
 │
 ├── web/                          # Frontend React application
-│   ├── k8s/                      # Frontend Kubernetes manifests
-│   │   ├── deployment.yaml       # Frontend deployment
-│   │   └── service.yaml          # Frontend service
 │   ├── src/                      # React source code
+│   ├── k8s/                      # Frontend Kubernetes manifests
+│       ├── deployment.yaml       # Frontend deployment manifest
+│       ├── service.yaml          # Frontend service manifest
 │   ├── public/                   # Static assets
+│   ├── node_modules/             # Frontend dependencies
 │   ├── Dockerfile                # Frontend container config
-│   ├── .env                      # Frontend environment variables
+│   ├── .dockerignore             # Docker ignore rules for frontend
+│   ├── .env                      # Frontend environment variables (not in git)
 │   ├── package.json              # Frontend dependencies
 │   └── vite.config.ts            # Vite configuration
 │
-├── src/                          # Backend API source code
-├── node_modules/                 # Backend dependencies
-├── Dockerfile                    # Backend container config
-├── package.json                  # Backend dependencies
-├── tsconfig.json                 # TypeScript configuration
-├── firebase-service-account.json # Firebase admin credentials (not in git)
-├── .env                          # Backend environment variables (not in git)
+├── infrastructure/               # Infrastructure as Code
+│   └── k8s/                      # Kubernetes manifests
+│       ├── namespace.yaml        # Dev namespace configuration
+│       ├── cloudflare-tunnel.yaml # Cloudflare Tunnel deployments (BE + FE)
+│       ├── ingress.yaml          # NGINX Ingress rules (optional)
+│       └── letsencrypt-prod.yaml # Let's Encrypt issuer (optional)
 │
-├── STEP1-ACR-API-DEPLOYMENT.md   # Step 1 documentation
-├── STEP2-BE-AKS-DEPLOYMENT.md    # Step 2 documentation
-├── STEP3-INGRESS-CONTROLLER.md   # Step 3 documentation
-├── STEP4-FE-AKS-DEPLOYMENT.md    # Step 4 documentation
-├── STEP5-FIREBASE-AUTH.md        # Step 5 documentation
-├── STEP6-SETUP-HTTPS-DOMAIN.md   # Step 6 documentation
-├── WEEKLY-REPORT-VIET.md         # Vietnamese weekly report
-├── WEEKLY-REPORT-ENG.md          # English weekly report
+├── docs/                         # Documentation
+│   ├── 01-SETUP-ACR-AND-API-DEPLOYMENT.md
+│   ├── 02-DEPLOY-BACKEND-TO-AKS.md
+│   ├── 03-SETUP-INGRESS-CONTROLLER.md
+│   ├── 04-DEPLOY-FRONTEND-TO-AKS.md
+│   ├── 05-FIREBASE-AUTHENTICATION-FLOW.md
+│   ├── 06-SETUP-HTTPS-WITH-CLOUDFLARE-TUNNEL.md
+│   └── WEEKLY-REPORT-ENG.md      # Weekly report
+│
+├── .gitignore                    # Git ignore rules
 └── README.md                     # This file
 ```
 
@@ -148,11 +159,12 @@ cd mindx-intern04-week01
 
 #### Install Dependencies
 ```bash
+cd api
 npm install
 ```
 
 #### Configure Environment Variables
-Create `.env` file in root directory:
+Create `.env` file in `api/` directory:
 
 ```bash
 PORT=3000
@@ -161,7 +173,7 @@ NODE_ENV=development
 
 #### Setup Firebase Admin
 1. Download Firebase service account JSON from Firebase Console
-2. Save as `firebase-service-account.json` in root directory
+2. Save as `firebase-service-account.json` in `api/` directory
 3. Add to `.gitignore`
 
 #### Run Locally
@@ -203,28 +215,34 @@ Frontend will be available at `http://localhost:5173`
 
 For detailed deployment instructions, refer to the step-by-step guides:
 
-1. **[STEP1-ACR-API-DEPLOYMENT.md](./STEP1-ACR-API-DEPLOYMENT.md)** - Setup Azure Container Registry and deploy API
-2. **[STEP2-BE-AKS-DEPLOYMENT.md](./STEP2-BE-AKS-DEPLOYMENT.md)** - Deploy backend to AKS
-3. **[STEP3-INGRESS-CONTROLLER.md](./STEP3-INGRESS-CONTROLLER.md)** - Setup ingress controller or Cloudflare Tunnel
-4. **[STEP4-FE-AKS-DEPLOYMENT.md](./STEP4-FE-AKS-DEPLOYMENT.md)** - Deploy frontend to AKS
-5. **[STEP5-FIREBASE-AUTH.md](./STEP5-FIREBASE-AUTH.md)** - Implement Firebase authentication
-6. **[STEP6-SETUP-HTTPS-DOMAIN.md](./STEP6-SETUP-HTTPS-DOMAIN.md)** - Setup HTTPS with Cloudflare Tunnel
+1. **[01-SETUP-ACR-AND-API-DEPLOYMENT.md](./docs/01-SETUP-ACR-AND-API-DEPLOYMENT.md)** - Setup Azure Container Registry and deploy API
+2. **[02-DEPLOY-BACKEND-TO-AKS.md](./docs/02-DEPLOY-BACKEND-TO-AKS.md)** - Deploy backend to AKS
+3. **[03-SETUP-INGRESS-CONTROLLER.md](./docs/03-SETUP-INGRESS-CONTROLLER.md)** - Setup ingress controller or Cloudflare Tunnel
+4. **[04-DEPLOY-FRONTEND-TO-AKS.md](./docs/04-DEPLOY-FRONTEND-TO-AKS.md)** - Deploy frontend to AKS
+5. **[05-FIREBASE-AUTHENTICATION-FLOW.md](./docs/05-FIREBASE-AUTHENTICATION-FLOW.md)** - Implement Firebase authentication
+6. **[06-SETUP-HTTPS-WITH-CLOUDFLARE-TUNNEL.md](./docs/06-SETUP-HTTPS-WITH-CLOUDFLARE-TUNNEL.md)** - Setup HTTPS with Cloudflare Tunnel
 
 ### Quick Deployment Commands
 
 #### Backend Deployment
 ```bash
+# Navigate to backend directory
+cd api
+
 # Build and push to ACR
 docker build -t <ACR_NAME>.azurecr.io/<API-NAME>:v1.x.x .
 az acr login --name <ACR_NAME>
 docker push <ACR_NAME>.azurecr.io/<API-NAME>:v1.x.x
 
-# Deploy to AKS
-kubectl apply -f k8s/
+# Deploy to AKS (from root directory)
+cd ..
+kubectl apply -f infrastructure/k8s/namespace.yaml
+kubectl apply -f infrastructure/k8s/cloudflare-tunnel.yaml
 ```
 
 #### Frontend Deployment
 ```bash
+# Navigate to frontend directory
 cd web
 
 # Build with environment variables
@@ -241,26 +259,46 @@ docker build --no-cache \
 # Push to ACR
 docker push <ACR_NAME>.azurecr.io/<FE-NAME>:v1.x.x
 
-# Deploy to AKS
-kubectl apply -f k8s/
+# Deploy to AKS (from root directory)
+cd ..
+kubectl apply -f infrastructure/k8s/cloudflare-tunnel.yaml
 ```
 
 #### Setup Cloudflare Tunnels
 ```bash
-# Backend tunnel
-kubectl -n dev create deployment api-tunnel \
-  --image=cloudflare/cloudflared:latest \
-  -- cloudflared tunnel --no-autoupdate --url http://mindx-api:80
+# Apply tunnel configuration from manifests
+kubectl apply -f infrastructure/k8s/namespace.yaml
+kubectl apply -f infrastructure/k8s/cloudflare-tunnel.yaml
 
-# Frontend tunnel
-kubectl -n dev create deployment fe-tunnel \
-  --image=cloudflare/cloudflared:latest \
-  -- cloudflared tunnel --no-autoupdate --url http://frontend-service:80
+# Verify tunnels are running
+kubectl get pods -n dev | grep tunnel
 
-# Get tunnel URLs
+# Get tunnel URLs from logs
 kubectl -n dev logs deploy/api-tunnel --tail=50 | grep trycloudflare.com
 kubectl -n dev logs deploy/fe-tunnel --tail=50 | grep trycloudflare.com
 ```
+
+**Note**: The `cloudflare-tunnel.yaml` manifest includes both backend and frontend tunnel deployments.
+
+### Automated Deployment Script
+
+For convenience, use the included deployment script:
+
+```bash
+# Make script executable
+chmod +x deploy-k8s.sh
+
+# Run deployment
+./deploy-k8s.sh
+```
+
+The script will:
+- Verify kubectl connection to AKS cluster
+- Apply namespace configuration
+- Deploy Cloudflare Tunnels
+- Wait for pods to be ready
+- Display tunnel URLs automatically
+- Optionally apply ingress and Let's Encrypt configs
 
 ## API Endpoints
 
@@ -278,16 +316,18 @@ kubectl -n dev logs deploy/fe-tunnel --tail=50 | grep trycloudflare.com
 
 ## Environment Variables
 
-### Backend (.env)
+### Backend (api/.env)
 ```bash
 PORT=3000
-NODE_ENV=deployment
-FIREBASE_SERVICE_ACCOUNT_PATH=/path/to/firebase-service-account.json
+NODE_ENV=production
+FIREBASE_SERVICE_ACCOUNT_PATH=/app/secrets/firebase-service-account.json
 ```
+
+**Note**: In Kubernetes deployment, Firebase credentials are mounted via secrets at the path specified above.
 
 ### Frontend (web/.env)
 ```bash
-VITE_API_URL=https://your-api-url
+VITE_API_URL=https://your-api-tunnel-url.trycloudflare.com
 VITE_FIREBASE_API_KEY=your-api-key
 VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=your-project-id
@@ -353,6 +393,7 @@ docker build --build-arg VITE_FIREBASE_API_KEY="your-key" ...
 
 ### Backend Tests
 ```bash
+cd api
 npm test
 ```
 
@@ -364,11 +405,12 @@ npm test
 
 ### Manual Testing
 ```bash
-# Test backend API
-curl http://localhost:3000/health
+# Test backend API (replace with your tunnel URL)
+curl https://your-api-tunnel.trycloudflare.com/health
 
 # Test with authentication
-curl -H "Authorization: Bearer <TOKEN>" http://localhost:3000/protected/profile
+curl -H "Authorization: Bearer <FIREBASE_ID_TOKEN>" \
+  https://your-api-tunnel.trycloudflare.com/protected/profile
 ```
 
 ## Security Notes
