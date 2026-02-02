@@ -286,5 +286,5 @@
 ---
 
 **Prepared by**: Nguyen Ngoc Lan  
-**Date**: 01/02/2026  
-**Mentors Review**: Trinh Van Thuan, Tran Thi Thanh Duyen
+**Date**: 02/02/2026  
+**Mentors Review**: Trinh Van Thuan

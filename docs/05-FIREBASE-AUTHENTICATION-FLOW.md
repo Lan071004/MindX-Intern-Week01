@@ -4,6 +4,109 @@ Integrate Firebase Authentication into the full-stack application. Update both f
 
 ---
 
+## Authentication Flow Overview
+
+This section illustrates the complete authentication flow, showing the interaction between Frontend (React), Backend (Express API), and Firebase services.
+
+### Complete Authentication Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant React as React Frontend
+    participant Express as Express Backend
+    participant Firebase as Firebase Auth
+    participant FirebaseAdmin as Firebase Admin SDK
+
+    Note over User,FirebaseAdmin: Registration Flow
+    User->>React: 1. Fill registration form
+    React->>Firebase: 2. createUserWithEmailAndPassword()
+    Firebase-->>React: 3. User created + ID Token
+    React->>React: 4. Store token in localStorage
+    React->>Express: 5. API call with Authorization header
+    Express->>FirebaseAdmin: 6. Verify ID Token
+    FirebaseAdmin-->>Express: 7. Token valid + User info
+    Express-->>React: 8. Protected data
+    React-->>User: 9. Show authenticated content
+
+    Note over User,FirebaseAdmin: Login Flow
+    User->>React: 1. Enter credentials
+    React->>Firebase: 2. signInWithEmailAndPassword()
+    Firebase-->>React: 3. ID Token returned
+    React->>React: 4. Store token in localStorage
+    React->>Express: 5. API call with token
+    Express->>FirebaseAdmin: 6. verifyIdToken()
+    FirebaseAdmin-->>Express: 7. Token verified
+    Express-->>React: 8. User data
+    React-->>User: 9. Dashboard/Protected page
+
+    Note over User,FirebaseAdmin: Protected Route Access
+    User->>React: 1. Navigate to protected route
+    React->>React: 2. Check token exists
+    alt Token exists
+        React->>Express: 3. GET /protected/profile
+        Note right of React: Authorization: Bearer <token>
+        Express->>FirebaseAdmin: 4. Verify token
+        alt Token valid
+            FirebaseAdmin-->>Express: 5. User UID + claims
+            Express-->>React: 6. 200 OK + data
+            React-->>User: 7. Show protected content
+        else Token invalid/expired
+            FirebaseAdmin-->>Express: 5. Error
+            Express-->>React: 6. 401 Unauthorized
+            React->>React: 7. Clear token
+            React-->>User: 8. Redirect to login
+        end
+    else No token
+        React-->>User: 3. Redirect to login
+    end
+
+    Note over User,FirebaseAdmin: Logout Flow
+    User->>React: 1. Click logout
+    React->>Firebase: 2. signOut()
+    Firebase-->>React: 3. Signed out
+    React->>React: 4. Clear localStorage
+    React-->>User: 5. Redirect to login page
+```
+
+### Token Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> NoToken: User visits site
+    NoToken --> HasToken: Login/Register
+    HasToken --> TokenValid: API call
+    TokenValid --> Success: Token verified
+    TokenValid --> TokenExpired: Token expired
+    TokenExpired --> Refresh: Auto refresh
+    Refresh --> HasToken: New token
+    TokenExpired --> NoToken: Refresh failed
+    Success --> HasToken: Continue using
+    HasToken --> NoToken: Logout
+    NoToken --> [*]
+```
+
+### Component Architecture
+
+**Frontend (React):**
+- Firebase SDK for authentication
+- React Context API for auth state management
+- Protected routes with authentication guards
+- Token storage in localStorage
+
+**Backend (Express):**
+- Firebase Admin SDK for token verification
+- Authentication middleware
+- Protected API endpoints
+- User management endpoints
+
+**Firebase Services:**
+- User authentication and session management
+- ID token generation and validation
+- Automatic token refresh
+
+---
+
 ## 5.1 Setup Firebase Project
 
 ### Create Firebase project
@@ -50,6 +153,34 @@ Create `src/config/firebase.ts` with your Firebase config and initialize Firebas
 
 Create authentication context and provider to manage auth state across the application.
 
+**Key authentication methods:**
+
+```typescript
+// Register
+const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+const idToken = await userCredential.user.getIdToken();
+
+// Login
+const userCredential = await signInWithEmailAndPassword(auth, email, password);
+const idToken = await userCredential.user.getIdToken();
+
+// Logout
+await signOut(auth);
+```
+
+**Token storage:**
+
+```typescript
+// Store token
+localStorage.setItem('firebaseToken', idToken);
+
+// Retrieve token
+const token = localStorage.getItem('firebaseToken');
+
+// Clear token
+localStorage.removeItem('firebaseToken');
+```
+
 ### Create Auth Components
 
 Implement Login and Register components with Firebase authentication methods (`signInWithEmailAndPassword`, `createUserWithEmailAndPassword`).
@@ -57,6 +188,12 @@ Implement Login and Register components with Firebase authentication methods (`s
 ### Add Protected Routes
 
 Update routing to protect routes that require authentication. Redirect unauthenticated users to login page.
+
+**Key files:**
+- `src/config/firebase.ts` - Firebase initialization
+- `src/contexts/AuthContext.tsx` - Auth state management
+- `src/components/Login.tsx` - Login form
+- `src/components/Register.tsx` - Registration form
 
 ### Test locally
 
@@ -90,6 +227,12 @@ Implement middleware to verify Firebase ID tokens on protected routes. Extract a
 ### Protect API Routes
 
 Apply auth middleware to routes that require authentication.
+
+**Key files:**
+- `src/config/firebaseConfig.ts` - Firebase Admin initialization
+- `src/middleware/authMiddleware.ts` - Token verification middleware
+- `src/routes/authRoutes.ts` - Auth endpoints
+- `src/routes/protectedRoutes.ts` - Protected endpoints
 
 ### Test locally
 
@@ -156,7 +299,7 @@ Update `api/k8s/deployment.yaml`:
 
 1. Change image tag to `v1.2.0`
 2. Add volume and volumeMount for the Firebase service account secret
-3. Add environment variable `GOOGLE_APPLICATION_CREDENTIALS` pointing to the mounted secret file
+3. Add environment variable `FIREBASE_SERVICE_ACCOUNT_PATH` pointing to the mounted secret file
 
 Apply changes:
 
@@ -289,3 +432,98 @@ kubectl logs -f deployment/mindx-api -n dev
 
 curl -H "Authorization: Bearer <FIREBASE_ID_TOKEN>" http://<EXTERNAL_IP>/api/protected
 ```
+
+### Complete Testing Checklist
+
+#### 1. Test Registration
+- Register new user with email and password
+- Verify in Firebase Console: Authentication > Users > Should see new user
+
+#### 2. Test Login
+- Login with registered credentials
+- Check browser DevTools > Application > Local Storage
+
+#### 3. Test Logout
+- Click logout button in frontend
+- Verify localStorage is cleared
+- Verify redirect to login page
+
+---
+
+## Security Considerations
+
+### Frontend Security
+
+1. **Token Storage:**
+   - Currently stored in `localStorage` (vulnerable to XSS)
+   - Alternative: `httpOnly` cookies (recommended for production)
+
+2. **Token Exposure:**
+   - Never log tokens to console
+   - Clear tokens on logout
+   - Handle expired tokens gracefully
+
+3. **Protected Routes:**
+   - Check auth state before rendering
+   - Redirect unauthenticated users
+   - Show loading states during verification
+
+### Backend Security
+
+1. **Token Verification:**
+   - Always verify tokens on protected endpoints
+   - Use Firebase Admin SDK for verification
+   - Check token expiration
+
+2. **CORS Configuration:**
+   - Allow only trusted origins
+   - Enable credentials for cookie-based auth
+   - Validate request headers
+
+3. **Environment Variables:**
+   - Store service account JSON securely
+   - Use Kubernetes Secrets in production
+   - Never commit credentials to git
+
+### Firebase Security
+
+1. **Firebase Rules:**
+   - Configure Firestore/Storage security rules
+   - Implement proper read/write permissions
+   - Use custom claims for role-based access
+
+2. **API Key Security:**
+   - Firebase API keys are safe to expose (domain-restricted)
+   - Configure authorized domains in Firebase Console
+   - Monitor usage for suspicious activity
+
+---
+
+## Common Issues & Solutions
+
+### Issue 1: "Firebase: Error (auth/invalid-api-key)"
+
+**Cause:** Firebase config not injected during build
+
+**Solution:** Use Docker `--build-arg` flags (see section 5.5 troubleshooting)
+
+### Issue 2: Backend returns 401 on valid token
+
+**Cause:** Service account not loaded or incorrect path
+
+**Solution:** 
+- Verify `GOOGLE_APPLICATION_CREDENTIALS` environment variable
+- Check volume mount in Kubernetes deployment
+- Ensure secret exists: `kubectl get secret firebase-service-account -n dev`
+
+### Issue 3: CORS errors on auth endpoints
+
+**Cause:** Backend not allowing frontend origin
+
+**Solution:** Update CORS config to include Cloudflare Tunnel URLs
+
+### Issue 4: Token refresh fails
+
+**Cause:** Firebase SDK automatically refreshes, but app doesn't handle it
+
+**Solution:** Implement token refresh listener in AuthContext
