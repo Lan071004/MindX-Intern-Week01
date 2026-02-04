@@ -1,3 +1,9 @@
+import './polyfills';
+
+import * as appInsights from 'applicationinsights';
+appInsights.setup().start();
+const client = appInsights.defaultClient; // Lưu client để dùng cho custom tracking
+
 import express, { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
@@ -49,6 +55,20 @@ app.use(helmet());
 app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
+// CUSTOM MIDDLEWARE: Track Request Count
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Track custom metric: số lượng requests theo endpoint
+  client.trackMetric({
+    name: 'RequestCount',
+    value: 1,
+    properties: {
+      endpoint: req.path,
+      method: req.method
+    }
+  });
+  next();
+});
+
 const PORT = process.env.PORT || 3000;
 
 // ─── Public Routes ─────────────────────────────────────────────────────────────
@@ -83,6 +103,16 @@ app.use('/protected', protectedRoutes);
 
 // ─── Error Handler ─────────────────────────────────────────────────────────────
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  // Track exception trong Application Insights
+  client.trackException({
+    exception: err,
+    properties: {
+      endpoint: req.path,
+      method: req.method,
+      userAgent: req.headers['user-agent']
+    }
+  });
+
   console.error(err);
   res.status(500).json({ error: 'Internal Server Error' });
 });

@@ -16,7 +16,7 @@ WORKDIR /app
 
 # Chỉ install production deps
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy compiled output từ build stage
 COPY --from=builder /app/dist ./dist

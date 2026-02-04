@@ -19,7 +19,7 @@ spec:
         - name: acr-pull
       containers:
         - name: mindx-api
-          image: mindxintern04acr.azurecr.io/mindx-api:v1.2.0
+          image: mindxintern04acr.azurecr.io/mindx-api:v1.2.6
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
@@ -30,6 +30,8 @@ spec:
               value: "production"
             - name: FIREBASE_SERVICE_ACCOUNT_PATH
               value: "/app/secrets/firebase-service-account.json"
+            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+              value: "InstrumentationKey=98dd17f2-4b34-4619-9125-cbba8c125527;IngestionEndpoint=https://japaneast-1.in.applicationinsights.azure.com/;LiveEndpoint=https://japaneast.livediagnostics.monitor.azure.com/;ApplicationId=f7a0b1e6-eaac-4032-b404-db92646b0f22"
           volumeMounts:
             - name: firebase-secret
               mountPath: /app/secrets
