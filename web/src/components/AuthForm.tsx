@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { trackEvent } from '../utils/analytics';
 import './AuthForm.css';
 
 const AuthForm: React.FC = () => {
@@ -19,24 +20,54 @@ const AuthForm: React.FC = () => {
 
     try {
       if (isSignUp) {
+        // Track signup attempt
+        trackEvent('Authentication', 'Signup Attempt', email);
+        
         await signUp(email, password);
+        
+        // Track successful signup
+        trackEvent('Authentication', 'Signup Success', email);
+
       } else {
+        // Track login attempt
+        trackEvent('Authentication', 'Login Attempt', email);
+        
         await login(email, password);
+        
+        // Track successful login
+        trackEvent('Authentication', 'Login Success', email);
       }
+      
       // Redirect to home after successful authentication
       navigate('/');
     } catch (err: any) {
       setError(err.message || 'Authentication failed');
+      
+      // Track failed authentication
+      if (isSignUp) {
+        trackEvent('Authentication', 'Signup Failed', email);
+      } else {
+        trackEvent('Authentication', 'Login Failed', email);
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  // Track form toggle (Login <-> Signup)
+  const handleToggleForm = () => {
+    setIsSignUp(!isSignUp);
+    setError('');
+    
+    trackEvent('Authentication', 'Form Toggle', isSignUp ? 'To Login' : 'To Signup');
+  };
+
+
   return (
     <div className="auth-form-container">
       <div className="auth-form-card">
         <h2 className="auth-form-title">
-          {isSignUp ? '📝 Register' : '🔐 Login'}
+          {isSignUp ? '🔐 Register' : '🔐 Login'}
         </h2>
 
         {error && <div className="auth-error">{error}</div>}
@@ -75,7 +106,7 @@ const AuthForm: React.FC = () => {
 
         <div className="auth-toggle">
           {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-          <button className="toggle-btn" onClick={() => { setIsSignUp(!isSignUp); setError(''); }}>
+          <button className="toggle-btn" onClick={handleToggleForm}>
             {isSignUp ? 'Login' : 'Register'}
           </button>
         </div>

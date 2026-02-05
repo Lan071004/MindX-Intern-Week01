@@ -8,6 +8,7 @@ import {
   AuthError,
 } from 'firebase/auth';
 import { auth } from '../firebase';
+import { trackEvent } from '../utils/analytics';
 
 // Define context shape
 interface AuthContextType {
@@ -60,6 +61,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Logout
   const logout = async (): Promise<void> => {
     try {
+      // Track logout event
+      const email = user?.email || 'unknown';
+      trackEvent('Authentication', 'Logout', email);
+      
       await signOut(auth);
     } catch (error) {
       throw new Error('Failed to logout');

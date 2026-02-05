@@ -23,7 +23,7 @@ spec:
 
       containers:
       - name: frontend
-        image: mindxintern04acr.azurecr.io/mindx-fe:v1.3.2
+        image: mindxintern04acr.azurecr.io/mindx-fe:v1.3.8
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
