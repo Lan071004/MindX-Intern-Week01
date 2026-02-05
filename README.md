@@ -1,17 +1,25 @@
-# MindX Training Week 01 Project
+# MindX Training Project (Week 01 & 02)
 
-Full-stack web application deployed on Azure Kubernetes Service (AKS) with Firebase Authentication and HTTPS support via Cloudflare Tunnel.
+Full-stack web application deployed on Azure Kubernetes Service (AKS) with Firebase Authentication, HTTPS support via Cloudflare Tunnel, and comprehensive production and product metrics monitoring.
 
 ## Project Overview
 
-This project demonstrates a complete cloud-native application deployment workflow, including:
+This project demonstrates a complete cloud-native application deployment workflow with observability, including:
 
+**Week 1 - Infrastructure & Deployment**:
 - Containerized Node.js/TypeScript backend API
 - React/TypeScript frontend application
 - Kubernetes orchestration on Azure AKS
 - Firebase authentication with JWT token validation
 - HTTPS access via Cloudflare Tunnel
 - CI/CD-ready infrastructure
+
+**Week 2 - Monitoring & Analytics**:
+- Production metrics with Azure Application Insights
+- Product metrics with Google Analytics 4
+- Alert configuration for backend monitoring
+- User behavior tracking and analytics
+- Comprehensive observability setup
 
 ## Live Application
 
@@ -22,14 +30,25 @@ This project demonstrates a complete cloud-native application deployment workflo
 
 ## Features
 
+**Application Features**:
 - User registration and login with Firebase
 - Protected routes requiring authentication
 - JWT token validation on backend
 - HTTPS/SSL via Cloudflare Tunnel
 - Full-stack communication over secure connections
+
+**Infrastructure Features**:
 - Kubernetes-native deployment
 - Container orchestration with health checks
 - Scalable architecture
+
+**Monitoring & Observability** (Week 2):
+- Production metrics tracking with Azure Application Insights
+- Real-time performance monitoring
+- Automated alerts for response time, exceptions, and availability
+- Product analytics with Google Analytics 4
+- User behavior tracking and event monitoring
+- Custom event tracking (login, logout, navigation)
 
 ## Architecture
 
@@ -41,17 +60,43 @@ Cloudflare Tunnel (HTTPS)
 Azure Kubernetes Service (AKS)
     ├── Frontend Service (ClusterIP)
     │   └── Frontend Pods (React)
+    │       ├── Google Analytics (Product Metrics)
+    │       └── User Event Tracking
     │
     └── Backend Service (ClusterIP)
         └── Backend Pods (Express + Firebase Admin)
-            ↓
-        Firebase Authentication
+            ├── Application Insights (Production Metrics)
+            ├── Performance Monitoring
+            └── Error Tracking
+                ↓
+            Firebase Authentication
+```
+
+### Monitoring Architecture
+
+```
+Production Metrics:
+Backend API → Application Insights → Azure Monitor
+    ├── Request/Response tracking
+    ├── Performance metrics
+    ├── Exception monitoring
+    └── Alert Rules → Email Notifications
+
+Product Metrics:
+Frontend App → Google Analytics 4
+    ├── Page view tracking
+    ├── User session analytics
+    ├── Custom event tracking
+    └── User behavior insights
 ```
 
 ## Project Reports
 
-- **[WEEKLY-REPORT-VIET.md](./WEEKLY-REPORT-VIET.md)** - Vietnamese weekly progress report
-- **[WEEKLY-REPORT-ENG.md](./WEEKLY-REPORT-ENG.md)** - English weekly progress report
+**Week 1 - Infrastructure & Deployment**:
+- **[REPORT-WEEK01.md](./docs/REPORT-WEEK01.md)** - Week 1 progress report
+
+**Week 2 - Monitoring & Analytics**:
+- **[REPORT-WEEK02.md](./docs/REPORT-WEEK02.md)** - Week 2 progress report
 
 
 ## Tech Stack
@@ -60,6 +105,7 @@ Azure Kubernetes Service (AKS)
 - Node.js + TypeScript
 - Express.js
 - Firebase Admin SDK
+- Application Insights SDK
 - CORS middleware
 
 ### Frontend
@@ -67,6 +113,7 @@ Azure Kubernetes Service (AKS)
 - TypeScript
 - Vite
 - Firebase SDK
+- react-ga4 (Google Analytics)
 - Axios
 - React Router
 
@@ -77,6 +124,12 @@ Azure Kubernetes Service (AKS)
 - Docker
 - Kubernetes
 - Helm
+
+### Monitoring & Analytics
+- Azure Application Insights (Production Metrics)
+- Azure Monitor (Alerts & Notifications)
+- Google Analytics 4 (Product Metrics)
+- KQL (Kusto Query Language)
 
 ### Authentication
 - Firebase Authentication
@@ -213,6 +266,8 @@ Frontend will be available at `http://localhost:5173`
 
 ## Deployment Guide
 
+### Week 1: Infrastructure & Application Deployment
+
 For detailed deployment instructions, refer to the step-by-step guides:
 
 1. **[01-SETUP-ACR-AND-API-DEPLOYMENT.md](./docs/01-SETUP-ACR-AND-API-DEPLOYMENT.md)** - Setup Azure Container Registry and deploy API
@@ -221,6 +276,13 @@ For detailed deployment instructions, refer to the step-by-step guides:
 4. **[04-DEPLOY-FRONTEND-TO-AKS.md](./docs/04-DEPLOY-FRONTEND-TO-AKS.md)** - Deploy frontend to AKS
 5. **[05-FIREBASE-AUTHENTICATION-FLOW.md](./docs/05-FIREBASE-AUTHENTICATION-FLOW.md)** - Implement Firebase authentication
 6. **[06-SETUP-HTTPS-WITH-CLOUDFLARE-TUNNEL.md](./docs/06-SETUP-HTTPS-WITH-CLOUDFLARE-TUNNEL.md)** - Setup HTTPS with Cloudflare Tunnel
+
+### Week 2: Monitoring & Analytics Setup
+
+For detailed monitoring setup instructions, refer to:
+
+7. **[SET-UP-AZURE-APP-INSIGHT.md](./docs/SET-UP-AZURE-APP-INSIGHT.md)** - Setup Azure Application Insights for production metrics
+8. **[SET-UP-GOOGLE-ANALYTICS.md](./docs/SET-UP-GOOGLE-ANALYTICS.md)** - Setup Google Analytics 4 for product metrics
 
 ### Quick Deployment Commands
 
@@ -314,6 +376,101 @@ The script will:
 - `GET /protected/profile` - Get user profile
 - Requires `Authorization: Bearer <FIREBASE_ID_TOKEN>` header
 
+## Monitoring & Observability
+
+### Production Metrics (Azure Application Insights)
+
+**Access Dashboard**:
+- Navigate to [Azure Portal](https://portal.azure.com)
+- Go to Application Insights → `mindx-app-insights`
+
+**Key Metrics Monitored**:
+- **Request Volume**: Total API calls and throughput
+- **Response Time**: Average, P50, P90, P95, P99 latencies
+- **Error Rate**: Failed requests and exceptions
+- **Availability**: Uptime percentage from global health checks
+- **Dependencies**: External service calls and performance
+
+**Alert Rules Configured**:
+1. **High Response Time Alert**
+   - Triggers when average response time > 1 second
+   - Severity: Warning (Level 2)
+   - Check frequency: Every 1 minute
+   - Lookback period: 5 minutes
+
+2. **High Exception Rate Alert**
+   - Triggers when exceptions > 10 in 5 minutes
+   - Severity: Error (Level 1)
+   - Check frequency: Every 1 minute
+
+3. **Availability Alert**
+   - Health check endpoint: `/health`
+   - Test frequency: Every 5 minutes
+   - Test locations: 5 global regions
+   - Success criteria: HTTP 200, <30 seconds
+
+**View Logs with KQL**:
+```kusto
+// Recent requests
+requests
+| where timestamp > ago(1h)
+| order by timestamp desc
+| take 10
+
+// Exceptions in the last hour
+exceptions
+| where timestamp > ago(1h)
+| project timestamp, type, outerMessage, problemId
+| order by timestamp desc
+```
+
+### Product Metrics (Google Analytics 4)
+
+**Access Dashboard**:
+- Navigate to [Google Analytics](https://analytics.google.com)
+- Select Property: `MindX Frontend App`
+
+**Key Metrics Tracked**:
+- **Page Views**: Total page loads and unique page views
+- **User Sessions**: Active sessions, session duration
+- **Active Users**: Real-time and daily active users
+- **Custom Events**:
+  - Login events (successful authentication)
+  - Logout events (session termination)
+  - Navigation events (page transitions)
+- **User Demographics**: Geographic location, language
+- **Technology**: Device types, browsers, OS
+
+**Key Reports**:
+- **Real-time**: Current active users and events
+- **Engagement**: Event tracking and page views
+- **User Attributes**: Demographics and technology
+- **Library**: Custom dashboards and saved reports
+
+**Tracked Events**:
+```javascript
+// Login Event
+trackEvent('User', 'Login', 'Success');
+
+// Logout Event
+trackEvent('User', 'Logout', 'Session End');
+
+// Page View (automatic)
+trackPageView(location.pathname);
+```
+
+### Alert Notifications
+
+**Email Notifications**:
+- Alert emails sent to configured email address
+- Includes alert details, severity, and affected resources
+- Contains links to Azure Portal for investigation
+
+**Alert Action Groups**:
+- Name: `email-alerts`
+- Scope: Global
+- Notification type: Email/SMS/Push/Voice
+
 ## Environment Variables
 
 ### Backend (api/.env)
@@ -321,9 +478,12 @@ The script will:
 PORT=3000
 NODE_ENV=production
 FIREBASE_SERVICE_ACCOUNT_PATH=/app/secrets/firebase-service-account.json
+APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey=xxx;IngestionEndpoint=https://...
 ```
 
-**Note**: In Kubernetes deployment, Firebase credentials are mounted via secrets at the path specified above.
+**Note**: 
+- Firebase credentials are mounted via Kubernetes secrets
+- Application Insights Connection String is injected via deployment.yaml
 
 ### Frontend (web/.env)
 ```bash
@@ -334,6 +494,7 @@ VITE_FIREBASE_PROJECT_ID=your-project-id
 VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
 VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
+VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 ```
 
 **Important**: Vite environment variables are **build-time only**. They must be injected via Docker `--build-arg` flags during the build process.
