@@ -12,6 +12,7 @@
 | ---- | ----------- | ------ | --------------- |
 | Task 1 | Azure App Insights Setup | Completed | Wednesday (05/02) |
 | Task 2 | Google Analytics Setup | Completed | Thursday (06/02) |
+| Task 3 | Refine docs based on mentor review | Completed | Friday (07/02) |
 
 **Result**: Completed 100% of requirements within the deadline (T+7)
 
@@ -59,7 +60,7 @@
 ### **Wednesday (04/02)** – Azure App Insights Completed
 
 **Activities**:
-* Set up Azure Application Insights resource following [SET-UP-AZURE-APP-INSIGHT.md](./docs/SET-UP-AZURE-APP-INSIGHT.md)
+* Set up Azure Application Insights resource following [SET-UP-AZURE-APP-INSIGHT.md](./SET-UP-AZURE-APP-INSIGHT.md)
 * Integrated Application Insights SDK with backend API
 * Configured 3 alert rules: Response Time, Exception Rate, and Availability
 * Tested alerts by scaling deployment and verified email notifications
@@ -82,7 +83,7 @@
 ### **Thursday (05/02)** – Google Analytics Completed
 
 **Activities**:
-* Set up Google Analytics 4 property following [SET-UP-GOOGLE-ANALYTICS.md](./docs/SET-UP-GOOGLE-ANALYTICS.md)
+* Set up Google Analytics 4 property following [SET-UP-GOOGLE-ANALYTICS.md](./SET-UP-GOOGLE-ANALYTICS.md)
 * Integrated react-ga4 with frontend application
 * Implemented event tracking for Login, Logout, and Page Views
 * Built and deployed with `VITE_GA_MEASUREMENT_ID` environment variable
@@ -140,6 +141,6 @@
 ---
 
 **Prepared by**: Nguyen Ngoc Lan  
-**Date**: 05/02/2026  
-**Status**: Week 2 Completed - Awaiting Review  
+**Date**: 06/02/2026  
+**Status**: Week 2 Completed - Reviewed 
 **Mentors**: Trinh Van Thuan, Tran Thi Thanh Duyen

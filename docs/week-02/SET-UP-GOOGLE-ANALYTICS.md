@@ -173,6 +173,11 @@ kubectl logs -f deployment/frontend-deployment -n dev --tail=50
 3. Navigate to: **Sidebar** → **Reports** → **Realtime**
 
 4. You should see:
+     ![Real-Time Reports Overview 1](../images/google-analytics/ga-real-time-report-overview-1.png)
+     ![Real-Time Reports Overview 2](../images/google-analytics/ga-real-time-report-overview-2.png)
+     ![Real-Time Reports Overview 3](../images/google-analytics/ga-real-time-report-overview-3.png)
+     ![Real-Time Reports Page](../images/google-analytics/ga-real-time-report-page.png)
+     
    - **Active users** currently on your site
    - **Page views** happening in real-time
    - **Events** being triggered
@@ -180,20 +185,46 @@ kubectl logs -f deployment/frontend-deployment -n dev --tail=50
 
 ---
 
-## Viewing Analytics Data in Google Analytics
+##  Part 5: How to Access Google Analytics Dashboard & View Analytics Data
 
-### Real-time Reports
+### Access Google Analytics (For Viewers/Reviewers)
+
+1. Go to [Google Analytics](https://analytics.google.com)
+2. Sign in with your **MindX company email** (mentor's email that was granted Viewer access)
+![Viewer Role](../images/google-analytics/ga-viewer-role.png)
+3. Click **MindX Training**
+4. Select property: **MindX Frontend App**
+
+### View Real-time Reports
 **Sidebar** → **Reports** → **Realtime**
 - See current active users
 - Monitor events as they happen
+ ![Real-Time Reports Overview 1](../images/google-analytics/ga-real-time-report-overview-1.png)
+ ![Real-Time Reports Overview 2](../images/google-analytics/ga-real-time-report-overview-2.png)
+ ![Real-Time Reports Overview 3](../images/google-analytics/ga-real-time-report-overview-3.png)
+ ![Real-Time Reports Page](../images/google-analytics/ga-real-time-report-page.png)
 
-### User Reports
+### View User Reports
 **Sidebar** → **Reports** → **User**
 - **User attributes**: Demographics and technology
-- **Technology**: Device and browser information
+ ![User Attributes Overview 1](../images/google-analytics/ga-user-attribute-overview-1.png)
+ ![User Attributes Overview 2](../images/google-analytics/ga-user-attribute-overview-2.png)
+ ![User Attributes Overview 3](../images/google-analytics/ga-user-attribute-overview-3.png)
+ ![User Attributes Demographic 1](../images/google-analytics/ga-user-attribute-demographic-1.png)
+ ![User Attributes Demographic 2](../images/google-analytics/ga-user-attribute-demographic-2.png)
+ ![User Attributes Object 1](../images/google-analytics/ga-user-attribute-object-1.png)
+ ![User Attributes Object 2](../images/google-analytics/ga-user-attribute-object-2.png)
 
-### Library
+- **Technology**: Device and browser information
+ ![User Attributes Technology Overview 1](../images/google-analytics/ga-user-technology-overview-1.png)
+ ![User Attributes Technology Overview 2](../images/google-analytics/ga-user-technology-overview-2.png)
+ ![User Attributes Technology Overview 3](../images/google-analytics/ga-user-technology-overview-3.png)
+ ![User Attributes Technology Details 1](../images/google-analytics/ga-user-technology-details-1.png)
+ ![User Attributes Technology Details 2](../images/google-analytics/ga-user-technology-details-2.png)
+
+### View Library
 **Sidebar** → **Library**: Access saved reports and custom dashboards
+ ![GA Library](../images/google-analytics/ga-library.png)
 
 ---
 
@@ -209,3 +240,4 @@ kubectl logs -f deployment/frontend-deployment -n dev --tail=50
    - Check that you're already done verifying Google Tag email
    - Check that gtag.js is properly loaded in `index.html`
    - Use browser DevTools → Network tab to confirm gtag requests
+

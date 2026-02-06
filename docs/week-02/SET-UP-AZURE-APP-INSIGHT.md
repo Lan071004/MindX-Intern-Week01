@@ -134,6 +134,7 @@ npm install applicationinsights@2.9.5 --save
     | take 10
     ```
     - If you see requests appearing → Success!
+    ![Request Log](../images/app-insights/app-insights-kql-requests-log.png)
 
 ---
 
@@ -184,6 +185,9 @@ npm install applicationinsights@2.9.5 --save
    - **Automatically resolve alerts**: Check
    - Click **Review + create** → **Create**
 
+10. **Result:**
+![Alert](../images/app-insights/app-insights-alerts.png)
+
 ---
 
 ### Alert 2: Exception/Error Alert
@@ -218,6 +222,8 @@ npm install applicationinsights@2.9.5 --save
    | project timestamp, type, outerMessage, problemId
    | order by timestamp desc
    ```
+   - If you see 0 exceptions appearing → Your app is running goodly!
+    ![Exceptions](../images/app-insights/app-insights-kql-exceptions-log.png)
 
 ---
 
@@ -257,10 +263,22 @@ npm install applicationinsights@2.9.5 --save
      ```bash
      kubectl scale deployment/<<BE-NAME>> --replicas=2 -n dev
      ```
+8. **Result**:
+    ![Availability](../images/app-insights/app-insights-availability.png)
+    ![Alerts](../images/app-insights/app-insights-alerts.png)
+    ![Alert's Details](../images/app-insights/app-insights-alerts-details.png)
+    ![Alerts History](../images/app-insights/app-insights-alerts-history.png)
 
 ---
 
-## Part 4: View Logs & Metrics (No-Code)
+## Part 4: How to Access Azure Application Insights & View Logs, Metrics
+
+### Access the Dashboard
+1. Go to [Azure Portal](https://portal.azure.com)
+2. Search for "Application Insights" or navigate to your resource group
+    ![Resource Group Dashboard](../images/app-insights/azure-dashboard.png)
+3. Click on `mindx-app-insights`
+    ![Application Insights Overview](../images/app-insights/app-insights-overview.png)
 
 ### A. View Logs
 
@@ -271,20 +289,25 @@ Use the test queries from Part 3 steps above.
 1. Sidebar → **Investigate** → **Performance**
 2. View charts:
    - **Operations**: Which APIs are being called?
+    ![Performance Operations](../images/app-insights/app-insights-performance-operations.png)
    - **Dependencies**: Where is this service calling? (DB, external API)
+    ![Performance Dependencies](../images/app-insights/app-insights-performance-dependencies.png)
    - **Roles**: Which service/component is generating traffic & metrics?
+    ![Performance Roles](../images/app-insights/app-insights-performance-roles.png)
 
 ### C. Metrics Explorer
 
 1. Sidebar → **Monitoring** → **Metrics**
 2. **Metric**: Select "Server response time"
 3. **Aggregation**: Select "Average"
-4. You'll see the chart
+4. You'll see the chart:
+    ![Metrics](../images/app-insights/app-insights-metrics.png)
 
 ### D. Application Map
 
 1. Sidebar → **Application Map**
 2. You'll see:
+    ![Application Map](../images/app-insights/app-insights-application-map.png)
 
    **Web Node**: Large green circle on the right
    - Green = healthy
