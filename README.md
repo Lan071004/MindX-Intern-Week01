@@ -1,6 +1,6 @@
-# MindX Training Project (Week 01 & 02)
+# MindX Training Project (Week 01 – 04)
 
-Full-stack web application deployed on Azure Kubernetes Service (AKS) with Firebase Authentication, HTTPS support via Cloudflare Tunnel, and comprehensive production and product metrics monitoring.
+Full-stack web application deployed on Azure Kubernetes Service (AKS) with Firebase Authentication, HTTPS support via Cloudflare Tunnel, comprehensive production and product metrics monitoring, and professional IT support ticket handling via Odoo Helpdesk.
 
 ## Project Overview
 
@@ -20,6 +20,22 @@ This project demonstrates a complete cloud-native application deployment workflo
 - Alert configuration for backend monitoring
 - User behavior tracking and analytics
 - Comprehensive observability setup
+
+**Week 3 - Hexagonal Architecture & Odoo API Integration**:
+- HTTP client adapter for external API integration
+- Odoo API integration for ticket operations (authenticate, retrieve, query)
+- CLI commands: `tickets list`, `tickets new`, `tickets unprocessed`, `tickets show <id>`
+- Integration tests with mock Odoo API
+- Setup and flow documentation for Odoo API configuration
+- Controlled AI usage in professional workflows
+
+**Week 4 - Ticket Handling & Professional Communication**:
+- Odoo Helpdesk setup and configuration (team, stages, tags, SLA)
+- 6 support scenarios covering all Classes of Service (Standard, Priority, Expedite, Fixed Deadline)
+- MindX 7-Step Process applied across all ticket types
+- Professional communication across customer, Dev Team, and management channels
+- Escalation workflows with full technical context
+- Pattern analysis and knowledge base documentation
 
 ## Live Application
 
@@ -49,6 +65,14 @@ This project demonstrates a complete cloud-native application deployment workflo
 - Product analytics with Google Analytics 4
 - User behavior tracking and event monitoring
 - Custom event tracking (login, logout, navigation)
+
+**Support & Ticket Handling** (Week 4):
+- Odoo Helpdesk with 5-stage workflow (New → In Progress → Waiting → Resolved → Closed)
+- Class of Service classification: Standard, Priority, Expedite, Fixed Deadline
+- MindX 7-Step Process: Reception, Response, Diagnosis, Resolution, Communication, Follow-up, Trend Analysis
+- 6 completed support scenarios with full documentation and communication logs
+- Escalation workflows to Dev Team, Content Ops, Manager, and VP/Manager
+- Pattern recognition and knowledge base recommendations
 
 ## Architecture
 
@@ -93,11 +117,15 @@ Frontend App → Google Analytics 4
 ## Project Reports
 
 **Week 1 - Infrastructure & Deployment**:
-- **[REPORT-WEEK01.md](./docs/REPORT-WEEK01.md)** - Week 1 progress report
+- **[REPORT-WEEK01.md](./docs/week-01/REPORT-WEEK01.md)** - Week 1 progress report
 
 **Week 2 - Monitoring & Analytics**:
-- **[REPORT-WEEK02.md](./docs/REPORT-WEEK02.md)** - Week 2 progress report
+- **[REPORT-WEEK02.md](./docs/week-02/REPORT-WEEK02.md)** - Week 2 progress report
 
+**Week 4 - Ticket Handling & Professional Communication**:
+- **[REPORT-WEEK04.md](./docs/week-04/REPORT-WEEK04.md)** - Week 4 progress report
+
+---
 
 ## Tech Stack
 
@@ -172,14 +200,27 @@ mindx-intern04-week01/
 │       ├── ingress.yaml          # NGINX Ingress rules (optional)
 │       └── letsencrypt-prod.yaml # Let's Encrypt issuer (optional)
 │
-├── docs/                         # Documentation
-│   ├── 01-SETUP-ACR-AND-API-DEPLOYMENT.md
-│   ├── 02-DEPLOY-BACKEND-TO-AKS.md
-│   ├── 03-SETUP-INGRESS-CONTROLLER.md
-│   ├── 04-DEPLOY-FRONTEND-TO-AKS.md
-│   ├── 05-FIREBASE-AUTHENTICATION-FLOW.md
-│   ├── 06-SETUP-HTTPS-WITH-CLOUDFLARE-TUNNEL.md
-│   └── WEEKLY-REPORT-ENG.md      # Weekly report
+├── docs/                             # Documentation
+│   └── week-01/                      # Week 1 code & deploy completion reports
+│       ├── REPORT-WEEK01.md          # Week 1 progress report
+│       ├── 01-SETUP-ACR-AND-API-DEPLOYMENT.md
+│       ├── 02-DEPLOY-BACKEND-TO-AKS.md
+│       ├── 03-SETUP-INGRESS-CONTROLLER.md
+│       ├── 04-DEPLOY-FRONTEND-TO-AKS.md
+│       ├── 05-FIREBASE-AUTHENTICATION-FLOW.md
+│       ├── 06-SETUP-HTTPS-WITH-CLOUDFLARE-TUNNEL.md
+│   └── week-02/                      # Week 2 monitoring completion reports
+│       ├── REPORT-WEEK02.md          # Week 2 progress report
+│       ├── SETUP-AZURE-APP-INSIGHT.md
+│       ├── SET-UP-GOOGLE-ANALYTICS.md
+│   └── week-04/                      # Week 4 scenario completion reports
+│       ├── REPORT-WEEK04.md          # Week 4 progress report
+│       ├── SCENARIO-01-LOGIN-ISSUE-COMPLETION-REPORT.md
+│       ├── SCENARIO-02-PERFORMANCE-PROBLEM-COMPLETION-REPORT.md
+│       ├── SCENARIO-03-CRITICAL-BUG-COMPLETION-REPORT.md
+│       ├── SCENARIO-04-FEATURE-REQUEST-COMPLETION-REPORT.md
+│       ├── SCENARIO-05-MULTI-USER-COMPLETION-REPORT.md
+│       └── SCENARIO-06-DEADLINE-REQUEST-COMPLETION-REPORT.md
 │
 ├── .gitignore                    # Git ignore rules
 └── README.md                     # This file
@@ -583,6 +624,61 @@ curl -H "Authorization: Bearer <FIREBASE_ID_TOKEN>" \
 - Implement proper CORS policies
 - Validate all Firebase ID tokens on backend
 
+---
+
+## Ticket Handling Setup (Week 4)
+
+### Odoo Helpdesk Configuration
+
+Week 4 uses Odoo Helpdesk (trial account at [odoo.com](https://www.odoo.com/vi_VN/pricing)) as the ticket management system. No code deployment is required.
+
+**Helpdesk Team Settings**:
+- Team Name: MindX Support Team
+- Email Alias: support@mindx2.odoo.com
+- SLA Policies: Enabled
+- Timesheets: Enabled
+
+**Workflow Stages**:
+
+| Stage | Purpose |
+| ----- | ------- |
+| New | Initial ticket state |
+| In Progress | Active investigation or resolution |
+| Waiting | Awaiting customer or third-party response |
+| Resolved | Issue fixed, awaiting customer confirmation |
+| Closed | Ticket completed and archived |
+
+**Class of Service Tags**:
+
+| Tag | Users Affected | Treatment |
+| --- | -------------- | --------- |
+| CoS: Standard | < 5 users | Normal priority queue |
+| CoS: Priority | 5-25 users | Expedited handling |
+| CoS: Expedite | > 25 users | Drop everything, parallel actions |
+| CoS: Fixed Deadline | Any | Time-driven, buffer delivery required |
+
+### MindX 7-Step Process
+
+1. **Reception** - Log ticket in Odoo (< 15 minutes)
+2. **Initial Response** - Acknowledge customer (< 30 minutes)
+3. **Diagnosis** - Investigate using logs, monitoring, and scope assessment
+4. **Resolution** - Apply fix or provide actionable workaround
+5. **Communication** - Update customer and stakeholders proactively
+6. **Follow-up** - Confirm resolution with customer before closing
+7. **Trend Analysis** - Document patterns and knowledge base recommendations
+
+### Completed Scenarios Summary
+
+| Scenario | Class | Tickets | Resolution Time | Escalation Target |
+| -------- | ----- | ------- | --------------- | ----------------- |
+| 01 Login Issue | Standard | #00002 | ~10 min | None |
+| 02 Performance Problem | Priority | #00003 | ~30 min | Dev Team |
+| 03 Critical Bug | Expedite | #00004 | ~35 min | Dev Team + Manager |
+| 04 Feature Request | Standard | #00005 | Same session | Product Team |
+| 05 Multi-User Issue | Priority | #00006-08 | ~45 min | Dev/Content Ops |
+| 06 Fixed Deadline | Fixed Deadline | #00009 | 20 hours | VP/Manager (approval) |
+
+---
 
 ## License
 
