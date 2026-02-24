@@ -224,5 +224,5 @@
 
 **Prepared by**: Nguyen Ngoc Lan  
 **Date**: 20/02/2026  
-**Status**: Week 4 Completed – Pending Mentor Review  
+**Status**: Week 4 Completed
 **Mentors**: Trinh Van Thuan, Tran Thi Thanh Duyen
