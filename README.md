@@ -1,6 +1,6 @@
-# MindX Training Project (Week 01 – 04)
+# MindX Training Project (Week 01 – 05)
 
-Full-stack web application deployed on Azure Kubernetes Service (AKS) with Firebase Authentication, HTTPS support via Cloudflare Tunnel, comprehensive production and product metrics monitoring, and professional IT support ticket handling via Odoo Helpdesk.
+Full-stack web application deployed on Azure Kubernetes Service (AKS) with Firebase Authentication, HTTPS support via Cloudflare Tunnel, comprehensive production and product metrics monitoring, professional IT support ticket handling via Odoo Helpdesk, and Operating Engineer automation for recurring support issues.
 
 ## Project Overview
 
@@ -36,6 +36,13 @@ This project demonstrates a complete cloud-native application deployment workflo
 - Professional communication across customer, Dev Team, and management channels
 - Escalation workflows with full technical context
 - Pattern analysis and knowledge base documentation
+
+**Week 5 - Reporting, Analysis & Automation**:
+- Ticket pattern analysis from Week 4 data (8 tickets, 5 recurring issues identified)
+- Odoo reporting: Daily Ticket Summary, Team Performance, Category Analysis, Volume Trends
+- Operating Engineer automation for Login Issue (account deactivation)
+- Python automation script: ticket classifier, HR check, decision logic, auto-response
+- Action plan projecting ~63% ticket volume reduction
 
 ## Live Application
 
@@ -73,6 +80,13 @@ This project demonstrates a complete cloud-native application deployment workflo
 - 6 completed support scenarios with full documentation and communication logs
 - Escalation workflows to Dev Team, Content Ops, Manager, and VP/Manager
 - Pattern recognition and knowledge base recommendations
+
+**Reporting & Automation** (Week 5):
+- Pattern analysis across 8 tickets: 5 recurring issues, 80+ users affected, 6.6 hrs agent time
+- Automation script: keyword classifier, HR status check, 4-branch decision logic, auto-email response
+- 3 automation branches: auto-reactivate (active employee), password reset, escalate (terminated/unknown)
+- Odoo Scheduled Action trigger configured (5-minute poll)
+- Action plan: ~63% projected ticket reduction across top 4 issues
 
 ## Architecture
 
@@ -124,6 +138,9 @@ Frontend App → Google Analytics 4
 
 **Week 4 - Ticket Handling & Professional Communication**:
 - **[REPORT-WEEK04.md](./docs/week-04/REPORT-WEEK04.md)** - Week 4 progress report
+
+**Week 5 - Reporting, Analysis & Automation**:
+- **[REPORT-WEEK05.md](./docs/week-05/REPORT-WEEK05.md)** - Week 5 progress report
 
 ---
 
@@ -213,6 +230,11 @@ mindx-intern04-week01/
 │       ├── REPORT-WEEK02.md          # Week 2 progress report
 │       ├── SETUP-AZURE-APP-INSIGHT.md
 │       ├── SET-UP-GOOGLE-ANALYTICS.md
+│   └── week-05/                      # Week 5 reporting & automation
+│       ├── REPORT-WEEK05.md          # Week 5 progress report
+│       ├── REPORTING-ANALYSIS-AND-FINDINGS.md
+│       ├── AUTOMATION-REPORT.md
+│       └── login_issue_automation.py
 │   └── week-04/                      # Week 4 scenario completion reports
 │       ├── REPORT-WEEK04.md          # Week 4 progress report
 │       ├── SCENARIO-01-LOGIN-ISSUE-COMPLETION-REPORT.md
@@ -677,6 +699,45 @@ Week 4 uses Odoo Helpdesk (trial account at [odoo.com](https://www.odoo.com/vi_V
 | 04 Feature Request | Standard | #00005 | Same session | Product Team |
 | 05 Multi-User Issue | Priority | #00006-08 | ~45 min | Dev/Content Ops |
 | 06 Fixed Deadline | Fixed Deadline | #00009 | 20 hours | VP/Manager (approval) |
+
+---
+
+## Automation Setup (Week 5)
+
+### Login Issue Automation
+
+Week 5 implements an Operating Engineer automation script for the recurring Login / Account Deactivation issue identified in pattern analysis.
+
+**Why Automated:**
+- Root cause (30-day auto-deactivation rule) requires a dev team code fix — not immediately actionable
+- Manual fix is always identical: check HR → reactivate → send email (5–10 min per ticket)
+- Automation handles 80%+ of cases with zero human intervention
+
+**Automation Workflow:**
+```
+Ticket created → Classify (login keywords?) → Extract email
+    → HR status check → Decision logic → Execute action
+    → Update Odoo ticket → Send response email
+```
+
+**Decision Logic:**
+
+| Employment | Account | Action |
+|---|---|---|
+| Active | Deactivated | Auto-reactivate |
+| Active | Active | Send password reset |
+| Terminated | Any | Escalate to engineer |
+| Unknown | Any | Escalate to engineer |
+
+**Run Demo:**
+```bash
+python docs/week-05/login_issue_automation.py
+```
+
+**Odoo Trigger:**
+- Settings → Technical → Automation → Automated Actions
+- Model: Helpdesk Ticket | Execute Every: 5 Minutes
+- Note: Full webhook deployment requires production environment (Odoo free trial blocks imports)
 
 ---
 
