@@ -213,5 +213,5 @@ All 3 branches executed correctly with full logging.
 
 **Prepared by**: Nguyen Ngoc Lan  
 **Date**: 27/02/2026  
-**Status**: Week 5 (Pending Review)
+**Status**: Week 5
 **Mentors**: Trinh Van Thuan, Tran Thi Thanh Duyen
