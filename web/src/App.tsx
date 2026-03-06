@@ -1,31 +1,35 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import './App.css';
 import { useEffect } from 'react';
-import { initGA, trackPageView } from './utils/analytics';
+import { AuthProvider } from './context/AuthContext';
+import Home from './adapters/inbound/pages/home/Home';
+import Login from './adapters/inbound/pages/login/Login';
 
-// Component để track page views
+// DI wiring — chỉ App.tsx biết về Firebase & GA
+import { FirebaseAuthAdapter } from './adapters/outbound/firebase/FirebaseAuthAdapter';
+import { GoogleAnalyticsAdapter } from './adapters/outbound/analytics/GoogleAnalyticsAdapter';
+
+import './App.css';
+
+// Khởi tạo adapters một lần duy nhất ở composition root
+const authPort = new FirebaseAuthAdapter();
+const analyticsPort = new GoogleAnalyticsAdapter();
+
 function Analytics() {
   const location = useLocation();
-
   useEffect(() => {
-    // Track page view mỗi khi route thay đổi
-    trackPageView(location.pathname + location.search);
+    analyticsPort.trackPageView(location.pathname + location.search);
   }, [location]);
-
   return null;
 }
 
 function App() {
   useEffect(() => {
-    // Khởi tạo Google Analytics khi app load
-    initGA();
+    analyticsPort.init();
   }, []);
 
   return (
-    <AuthProvider>
+    // Inject ports vào AuthProvider thay vì hardcode bên trong
+    <AuthProvider authPort={authPort} analyticsPort={analyticsPort}>
       <Router>
         <Analytics />
         <div className="App">

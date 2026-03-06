@@ -21,13 +21,16 @@ This project demonstrates a complete cloud-native application deployment workflo
 - User behavior tracking and analytics
 - Comprehensive observability setup
 
-**Week 3 - Hexagonal Architecture & Odoo API Integration**:
-- HTTP client adapter for external API integration
-- Odoo API integration for ticket operations (authenticate, retrieve, query)
-- CLI commands: `tickets list`, `tickets new`, `tickets unprocessed`, `tickets show <id>`
-- Integration tests with mock Odoo API
-- Setup and flow documentation for Odoo API configuration
-- Controlled AI usage in professional workflows
+**Week 3 - Hexagonal Architecture & TDD Research**:
+- Research Hexagonal Architecture (Ports & Adapters pattern) — core concepts, data flow, pros/cons
+- Comparison: Hexagonal vs Traditional Layered vs Clean Architecture
+- Research Test-Driven Development (TDD) — Red-Green-Refactor cycle, 5-step process
+- Refactored backend (Node.js/Express) to Hexagonal Architecture: domain, ports, application, adapters layers
+- Refactored frontend (React/TypeScript) to Hexagonal Architecture: IAuthPort, IAnalyticsPort, use cases, adapters
+- Applied Dependency Injection at composition root (server.ts / App.tsx)
+- Written unit & integration tests: VerifyTokenUseCase, LoginUseCase, SignUpUseCase, authMiddleware, authRoutes, protectedRoutes, AuthForm
+- Backend testing: Jest + ts-jest + supertest
+- Frontend testing: Vitest + React Testing Library
 
 **Week 4 - Ticket Handling & Professional Communication**:
 - Odoo Helpdesk setup and configuration (team, stages, tags, SLA)
@@ -246,6 +249,153 @@ mindx-intern04-week01/
 │
 ├── .gitignore                    # Git ignore rules
 └── README.md                     # This file
+```
+
+# Project Structure (after apply Hexagonal Architecture + TDD)
+
+```
+mindx-intern04-week01/
+├── api/                                             # Backend API application
+│   ├── src/                                         # Backend source code (Hexagonal Architecture)
+│   │   ├── adapters/                                # Connects the domain to the outside world
+│   │   │   ├── inbound/                             # Driving adapters — receive requests from outside
+│   │   │   │   └── http/
+│   │   │   │       ├── middleware/
+│   │   │   │       │   ├── authMiddleware.ts        # Parses Bearer token, calls IAuthService, attaches user to request
+│   │   │   │       │   └── authMiddleware.test.ts   # Unit test: header validation, 401/500 cases, next() behavior
+│   │   │   │       └── routes/
+│   │   │   │           ├── authRoutes.ts            # POST /auth/verify-token — token verification
+│   │   │   │           ├── authRoutes.test.ts       # Integration test: POST /auth/verify-token via supertest
+│   │   │   │           ├── protectedRoutes.ts       # GET /protected/profile — auth-required route
+│   │   │   │           └── protectedRoutes.test.ts  # Integration test: GET /protected/profile via supertest
+│   │   │   └── outbound/                            # Driven adapters — domain calls out to external services
+│   │   │       └── firebase/
+│   │   │           ├── firebaseAdmin.ts             # Initializes Firebase Admin SDK (singleton)
+│   │   │           └── FirebaseTokenVerifier.ts     # implements ITokenVerifier using Firebase Admin
+│   │   ├── application/                             # Use cases — orchestrate business logic
+│   │   │   └── auth/
+│   │   │       ├── VerifyTokenUseCase.ts            # implements IAuthService, calls ITokenVerifier
+│   │   │       └── VerifyTokenUseCase.test.ts       # Unit test: valid token → User, invalid token → AuthError
+│   │   ├── domain/                                  # Core — no dependency on any framework
+│   │   │   ├── entities/
+│   │   │   │   └── User.ts                          # User entity (uid, email, name)
+│   │   │   └── errors/
+│   │   │       ├── AuthError.ts                     # Domain error types (AuthError, AuthErrorCode)
+│   │   │       └── AuthError.test.ts                # Unit test: mapFirebaseError() — all error code mappings
+│   │   ├── ports/                                   # Interfaces — contracts between layers
+│   │   │   ├── inbound/
+│   │   │   │   └── IAuthService.ts                  # Primary port: verifyToken(token) → User
+│   │   │   └── outbound/
+│   │   │       └── ITokenVerifier.ts                # Secondary port: verifyToken(token) → DecodedToken
+│   │   ├── server.ts                                # Composition root: DI wiring + Express app factory
+│   │   ├── index.ts                                 # Entry point: boots server, initializes AppInsights
+│   │   └── polyfills.ts                             # Crypto polyfill for Alpine Linux (loaded first)
+│   ├── k8s/
+│   │   ├── deployment.yaml                          # Backend Deployment manifest
+│   │   └── service.yaml                             # Backend Service manifest
+│   ├── jest.config.js                               # Jest config: preset ts-jest, testEnvironment node
+│   ├── Dockerfile                                   # Backend container config
+│   ├── .dockerignore                                # Docker ignore rules for backend
+│   ├── package.json                                 # Backend dependencies
+│   ├── tsconfig.json                                # TypeScript configuration
+│   ├── firebase-service-account.json                # Firebase Admin credentials (not in git)
+│   └── .env                                         # Backend environment variables (not in git)
+│
+├── web/                                             # Frontend React application
+│   ├── src/                                         # React source code (Hexagonal Architecture)
+│   │   ├── domain/                                  # Core — no dependency on Firebase or React
+│   │   │   ├── entities/
+│   │   │   │   └── User.ts                          # User entity (uid, email, displayName)
+│   │   │   └── errors/
+│   │   │       ├── AuthError.ts                     # AuthError, AuthErrorCode, mapFirebaseError()
+│   │   │       └── AuthError.test.ts                # Unit test: mapFirebaseError() — all Firebase error codes
+│   │   ├── ports/                                   # Interfaces — contracts for adapters to implement
+│   │   │   ├── IAuthPort.ts                         # login, signUp, logout, getToken, onAuthStateChanged
+│   │   │   └── IAnalyticsPort.ts                    # init, trackPageView, trackEvent
+│   │   ├── application/                             # Use cases — orchestrate logic, call ports
+│   │   │   └── auth/
+│   │   │       ├── LoginUseCase.ts                  # Calls IAuthPort.login + tracks analytics
+│   │   │       ├── LoginUseCase.test.ts             # Unit test: success/failure, analytics tracking order
+│   │   │       ├── SignUpUseCase.ts                 # Calls IAuthPort.signUp + tracks analytics
+│   │   │       └── SignUpUseCase.test.ts            # Unit test: success/failure, analytics tracking order
+│   │   ├── adapters/                                # Port implementations
+│   │   │   ├── inbound/                             # UI layer — React components and pages
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── authForm/
+│   │   │   │   │   │   ├── AuthForm.tsx             # Login/signup form, uses useAuth()
+│   │   │   │   │   │   ├── AuthForm.test.tsx        # Component test: render, submit, error display, toggle
+│   │   │   │   │   │   └── AuthForm.css
+│   │   │   │   │   └── authTest/
+│   │   │   │   │       ├── ApiTest.tsx              # Tests API connectivity (health check + root)
+│   │   │   │   │       └── ApiTest.css
+│   │   │   │   └── pages/
+│   │   │   │       ├── home/
+│   │   │   │       │   ├── Home.tsx                 # Main page, redirects if not logged in
+│   │   │   │       │   └── Home.css
+│   │   │   │       └── login/
+│   │   │   │           ├── Login.tsx                # Login page, renders AuthForm
+│   │   │   │           └── Login.css
+│   │   │   └── outbound/                            # External service adapters
+│   │   │       ├── firebase/
+│   │   │       │   ├── FirebaseAuthAdapter.ts       # implements IAuthPort using Firebase Auth SDK
+│   │   │       │   └── firebaseConfig.ts            # Initializes Firebase app + exports auth instance
+│   │   │       ├── api/
+│   │   │       │   └── apiAdapter.ts                # Axios client + interceptors to auto-attach token
+│   │   │       └── analytics/
+│   │   │           └── GoogleAnalyticsAdapter.ts    # implements IAnalyticsPort using react-ga4
+│   │   ├── context/
+│   │   │   └── AuthContext.tsx                      # React context — receives IAuthPort and IAnalyticsPort via props
+│   │   ├── setupTests.ts                            # Vitest setup: import @testing-library/jest-dom
+│   │   ├── App.tsx                                  # Composition root: initializes adapters, injects into AuthProvider
+│   │   ├── App.css
+│   │   ├── index.tsx                                # React entry point
+│   │   └── index.css                                # Global styles
+│   ├── k8s/
+│   │   ├── deployment.yaml                          # Frontend Deployment manifest
+│   │   └── service.yaml                             # Frontend Service manifest
+│   ├── public/                                      # Static assets
+│   ├── Dockerfile                                   # Frontend container config
+│   ├── .dockerignore                                # Docker ignore rules for frontend
+│   ├── .env                                         # Frontend environment variables (not in git)
+│   ├── package.json                                 # Frontend dependencies
+│   └── vite.config.ts                               # Vite + Vitest configuration
+│
+├── infrastructure/                                  # Infrastructure as Code
+│   └── k8s/
+│       ├── namespace.yaml                           # Dev namespace configuration
+│       ├── cloudflare-tunnel.yaml                   # Cloudflare Tunnel deployments (BE + FE)
+│       ├── ingress.yaml                             # NGINX Ingress rules (optional)
+│       └── letsencrypt-prod.yaml                    # Let's Encrypt issuer (optional)
+│
+├── docs/                                            # Documentation
+│   ├── week-01/                                     # Code & deploy completion reports
+│   │   ├── REPORT-WEEK01.md
+│   │   ├── 01-SETUP-ACR-AND-API-DEPLOYMENT.md
+│   │   ├── 02-DEPLOY-BACKEND-TO-AKS.md
+│   │   ├── 03-SETUP-INGRESS-CONTROLLER.md
+│   │   ├── 04-DEPLOY-FRONTEND-TO-AKS.md
+│   │   ├── 05-FIREBASE-AUTHENTICATION-FLOW.md
+│   │   └── 06-SETUP-HTTPS-WITH-CLOUDFLARE-TUNNEL.md
+│   ├── week-02/                                     # Monitoring completion reports
+│   │   ├── REPORT-WEEK02.md
+│   │   ├── SETUP-AZURE-APP-INSIGHT.md
+│   │   └── SET-UP-GOOGLE-ANALYTICS.md
+│   ├── week-04/                                     # Scenario completion reports
+│   │   ├── REPORT-WEEK04.md
+│   │   ├── SCENARIO-01-LOGIN-ISSUE-COMPLETION-REPORT.md
+│   │   ├── SCENARIO-02-PERFORMANCE-PROBLEM-COMPLETION-REPORT.md
+│   │   ├── SCENARIO-03-CRITICAL-BUG-COMPLETION-REPORT.md
+│   │   ├── SCENARIO-04-FEATURE-REQUEST-COMPLETION-REPORT.md
+│   │   ├── SCENARIO-05-MULTI-USER-COMPLETION-REPORT.md
+│   │   └── SCENARIO-06-DEADLINE-REQUEST-COMPLETION-REPORT.md
+│   └── week-05/                                     # Reporting & automation
+│       ├── REPORT-WEEK05.md
+│       ├── REPORTING-ANALYSIS-AND-FINDINGS.md
+│       ├── AUTOMATION-REPORT.md
+│       └── login_issue_automation.py
+│
+├── .gitignore                                       # Git ignore rules
+└── README.md                                        # Project overview
 ```
 
 ## Prerequisites

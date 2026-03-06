@@ -1,123 +1,73 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import {
-  User,
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  AuthError,
-} from 'firebase/auth';
-import { auth } from '../firebase';
-import { trackEvent } from '../utils/analytics';
+import { LoginUseCase } from "@/application/auth/LoginUseCase";
+import { SignUpUseCase } from "@/application/auth/SignUpUseCase";
+import { User } from "@/domain/entities/User"; 
+import { IAnalyticsPort } from "@/ports/IAnalyticsPort";
+import { IAuthPort } from "@/ports/IAuthPort";
+import React, { createContext, ReactNode, useEffect } from "react";
 
-// Define context shape
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   getToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+interface AuthProviderProps {
+  children: ReactNode;
+  authPort: IAuthPort;
+  analyticsPort: IAnalyticsPort;
+}
 
-  // Listen to Firebase auth state changes
-  // Cái này sẽ tự trigger khi user login/logout hoặc khi app reload (Firebase tự restore session)
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authPort, analyticsPort }) => {
+  const [user, setUser] = React.useState<User | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  const loginUseCase = new LoginUseCase(authPort, analyticsPort);
+  const signUpUseCase = new SignUpUseCase(authPort, analyticsPort);
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = authPort.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
       setLoading(false);
     });
+    return () => unsubscribe();
+  }, [authPort]);
 
-    return () => unsubscribe(); // Cleanup
-  }, []);
-
-  // Sign Up
   const signUp = async (email: string, password: string): Promise<void> => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged sẽ tự update user state
-    } catch (error) {
-      const authError = error as AuthError;
-      throw new Error(getAuthErrorMessage(authError.code));
-    }
+    const newUser = await signUpUseCase.execute(email, password);
+    setUser(newUser);
   };
 
-  // Login
   const login = async (email: string, password: string): Promise<void> => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      const authError = error as AuthError;
-      throw new Error(getAuthErrorMessage(authError.code));
-    }
+    const loggedInUser = await loginUseCase.execute(email, password);
+    setUser(loggedInUser);
   };
 
-  // Logout
   const logout = async (): Promise<void> => {
-    try {
-      // Track logout event
-      const email = user?.email || 'unknown';
-      trackEvent('Authentication', 'Logout', email);
-      
-      await signOut(auth);
-    } catch (error) {
-      throw new Error('Failed to logout');
-    }
+    analyticsPort.trackEvent('Authentication', 'Logout', user?.email ?? 'unknown');
+    await authPort.logout();
+    setUser(null);
   };
 
-  // Get fresh ID token (tự refresh nếu expired)
   const getToken = async (): Promise<string | null> => {
-    if (!user) return null;
-    try {
-      // forceRefresh = true → Firebase tự lấy token mới nếu cần
-      const token = await user.getIdToken(true);
-      return token;
-    } catch (error) {
-      console.error('Failed to get token:', error);
-      return null;
-    }
+    return authPort.getToken();
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, login, logout, getToken }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, signUp, getToken }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
-
-// Helper: map Firebase error codes → user-friendly messages
-function getAuthErrorMessage(errorCode: string): string {
-  switch (errorCode) {
-    case 'auth/email-already-in-use':
-      return 'Email đã được sử dụng. Thử email khác hoặc đăng nhập.';
-    case 'auth/invalid-email':
-      return 'Email không hợp lệ.';
-    case 'auth/weak-password':
-      return 'Mật khẩu quá yếu. Cần ít nhất 6 ký tự.';
-    case 'auth/user-not-found':
-      return 'Không tìm thấy tài khoản với email này.';
-    case 'auth/wrong-password':
-      return 'Mật khẩu không đúng.';
-    case 'auth/invalid-credential':
-      return 'Email hoặc mật khẩu không đúng.';
-    case 'auth/too-many-requests':
-      return 'Quá nhiều lần thử. Vui lòng đợi một lúc.';
-    default:
-      return 'Lỗi xác thực không xác định.';
-  }
-}
