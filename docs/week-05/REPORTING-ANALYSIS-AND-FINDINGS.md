@@ -53,7 +53,9 @@ Toàn bộ 121 ticket trong tập dữ liệu đang ở trạng thái **In Progr
 
 ### 1.4 Báo cáo theo Người phụ trách (Assigned To)
 
-Ticket được phân bổ cho nhiều agent (Dương Thị Thu Huệ, Huỳnh Ngọc Thanh, Nguyễn Hữu Thình...) — đây là data của toàn đội Technical Support, không phải một agent đơn lẻ.
+Toàn bộ ticket đều thuộc team **Technical Support**. Ở cấp độ cá nhân, phần lớn ticket chưa được gán agent cụ thể — chỉ có 2 ticket assign cho Pham Thi Thuy.
+
+Đề xuất: bổ sung quy trình assign ticket cho agent cụ thể khi tiếp nhận, để đo được workload và hiệu suất từng người.
 
 ---
 
