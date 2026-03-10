@@ -14,7 +14,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler("AUTOMATION.log", encoding="utf-8"),
+        logging.FileHandler("automation.log", encoding="utf-8"),
     ],
 )
 log = logging.getLogger(__name__)
